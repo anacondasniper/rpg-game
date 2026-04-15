@@ -5,23 +5,23 @@ public class PlayerInteractor : MonoBehaviour
 {
     private GridMover mover;
     private GridManager grid;
-    private PlayerInputActions inputActions;
+    private PlayerInputActions input;
 
     void Awake()
     {
-        inputActions = new PlayerInputActions();
+        input = new PlayerInputActions();
     }
 
     void OnEnable()
     {
-        inputActions.Player.Enable();
-        inputActions.Player.Interact.started += OnInteract;
+        input.Player.Enable();
+        input.Player.Interact.started += Interact;
     }
 
     void OnDisable()
     {
-        inputActions.Player.Interact.started -= OnInteract;
-        inputActions.Player.Disable();
+        input.Player.Interact.started -= Interact;
+        input.Player.Disable();
     }
 
     void Start()
@@ -30,9 +30,9 @@ public class PlayerInteractor : MonoBehaviour
         grid = GridManager.Instance;
     }
 
-    void OnInteract(InputAction.CallbackContext ctx)
+    void Interact(InputAction.CallbackContext ctx)
     {
-        Vector2Int playerTile = grid.WorldToGrid(transform.position);
+        Vector2Int player = grid.WorldToGrid(transform.position);
 
         Vector2Int dir = Vector2Int.RoundToInt(
             new Vector2(mover.FacingDirection.x, mover.FacingDirection.z)
@@ -41,19 +41,14 @@ public class PlayerInteractor : MonoBehaviour
         if (dir == Vector2Int.zero)
             dir = Vector2Int.up;
 
-        Vector2Int targetTile = playerTile + dir;
+        Vector2Int target = player + dir;
 
-        if (targetTile.x < 0 || targetTile.x >= grid.gridWidth ||
-            targetTile.y < 0 || targetTile.y >= grid.gridHeight)
-            return;
+        if (!grid.InBounds(target)) return;
 
-        var tile = grid.tiles[targetTile.x, targetTile.y];
+        var tile = grid.tiles[target.x, target.y];
 
-        foreach (var obj in tile.interactables)
-        {
-            obj.Interact(gameObject);
-            return;
-        }
+        if (tile.interactable != null)
+            tile.interactable.Interact(gameObject);
     }
 
     void OnDrawGizmos()

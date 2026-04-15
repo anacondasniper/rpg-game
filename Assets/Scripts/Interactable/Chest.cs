@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class Chest : MonoBehaviour, IInteractable
 {
-    void OnEnable()
+    void Start()
     {
         GridManager grid = GridManager.Instance;
 

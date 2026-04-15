@@ -10,12 +10,6 @@ public enum TileType
 
 public class GridTile
 {
-    public TileType type = TileType.Walkable;
-
-    public List<IInteractable> interactables = new List<IInteractable>();
-
-    public bool IsWalkable()
-    {
-        return type != TileType.Obstacle;
-    }
+    public bool walkable = true;
+    public IInteractable interactable; 
 }

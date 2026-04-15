@@ -1,11 +1,9 @@
-using UnityEditor.Rendering;
 using UnityEngine;
 
 public class GridManager : MonoBehaviour
 {
     public static GridManager Instance { get; private set; }
 
-    [Header("Grid Settings")]
     public float tileSize = 1f;
     public int gridWidth = 20;
     public int gridHeight = 20;
@@ -16,12 +14,6 @@ public class GridManager : MonoBehaviour
 
     void Awake()
     {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
-
         Instance = this;
 
         tiles = new GridTile[gridWidth, gridHeight];
@@ -30,39 +22,30 @@ public class GridManager : MonoBehaviour
         {
             for (int z = 0; z < gridHeight; z++)
             {
-                Vector3 pos = Origin + new Vector3(x * tileSize, 0f, z * tileSize);
                 tiles[x, z] = new GridTile();
             }
         }
     }
-    private void Start()
+
+    public Vector2Int WorldToGrid(Vector3 worldPos)
     {
-        RegisterObstacles(); // <-- ADD THIS
+        Vector3 local = worldPos - Origin;
+
+        return new Vector2Int(
+            Mathf.RoundToInt(local.x / tileSize),
+            Mathf.RoundToInt(local.z / tileSize)
+        );
     }
 
-    private void RegisterObstacles()
+    public Vector3 GridToWorld(Vector2Int pos)
     {
-        GridObstacle[] obstacles = FindObjectsOfType<GridObstacle>();
-
-        foreach (var obs in obstacles)
-        {
-            Vector2Int tile = WorldToGrid(obs.transform.position);
-
-            if (tile.x < 0 || tile.x >= gridWidth ||
-                tile.y < 0 || tile.y >= gridHeight)
-                continue;
-
-            tiles[tile.x, tile.y].type = TileType.Obstacle;
-        }
+        return Origin + new Vector3(pos.x * tileSize, 0f, pos.y * tileSize);
     }
 
-   public void RegisterInteractable(Vector2Int pos, IInteractable obj)
+    public bool InBounds(Vector2Int pos)
     {
-        if (pos.x < 0 || pos.x >= gridWidth ||
-            pos.y < 0 || pos.y >= gridHeight)
-            return;
-
-        tiles[pos.x, pos.y].interactables.Add(obj);
+        return pos.x >= 0 && pos.x < gridWidth &&
+               pos.y >= 0 && pos.y < gridHeight;
     }
 
     public Vector3 SnapToGrid(Vector3 worldPos)
@@ -73,43 +56,6 @@ public class GridManager : MonoBehaviour
         float z = Mathf.Round(local.z / tileSize) * tileSize;
 
         return Origin + new Vector3(x, worldPos.y, z);
-    }
-
-    public Vector2Int WorldToGrid(Vector3 worldPos)
-    {
-        Vector3 local = worldPos - Origin;
-
-        int x = Mathf.RoundToInt(local.x / tileSize);
-        int z = Mathf.RoundToInt(local.z / tileSize);
-
-        return new Vector2Int(x, z);
-    }
-
-    public Vector3 GridToWorld(Vector2Int gridPos)
-    {
-        return Origin + new Vector3(gridPos.x * tileSize, 0f, gridPos.y * tileSize);
-    }
-
-    public bool IsWalkable(Vector3 worldPos)
-    {
-        Vector2Int gridPos = WorldToGrid(worldPos);
-
-        if (gridPos.x < 0 || gridPos.x >= gridWidth ||
-            gridPos.y < 0 || gridPos.y >= gridHeight)
-            return false;
-
-        return tiles[gridPos.x, gridPos.y].IsWalkable();
-    }
-
-    public void SetTileType(int x, int z, TileType type)
-    {
-        if (tiles == null)
-            return;
-
-        if (x < 0 || x >= gridWidth || z < 0 || z >= gridHeight)
-            return;
-
-        tiles[x, z].type = type;
     }
 
     public Vector3 ClampToBounds(Vector3 worldPos)
@@ -124,19 +70,22 @@ public class GridManager : MonoBehaviour
 
         return Origin + new Vector3(local.x, worldPos.y, local.z);
     }
-    void OnDrawGizmos()
+
+    public bool IsWalkable(Vector2Int pos)
     {
-        if (gridWidth <= 0 || gridHeight <= 0) return;
+        return InBounds(pos) && tiles[pos.x, pos.y].walkable;
+    }
 
-        Gizmos.color = new Color(1f, 1f, 1f, 0.15f);
+    public void SetObstacle(Vector2Int pos)
+    {
+        if (!InBounds(pos)) return;
+        tiles[pos.x, pos.y].walkable = false;
+    }
 
-        for (int x = 0; x < gridWidth; x++)
-        {
-            for (int z = 0; z < gridHeight; z++)
-            {
-                Vector3 center = Origin + new Vector3(x * tileSize, 0f, z * tileSize);
-                Gizmos.DrawWireCube(center, new Vector3(tileSize, 0.05f, tileSize));
-            }
-        }
+    public void RegisterInteractable(Vector2Int pos, IInteractable obj)
+    {
+        if (!InBounds(pos)) return;
+        tiles[pos.x, pos.y].interactable = obj;
+        tiles[pos.x, pos.y].walkable = false;
     }
 }

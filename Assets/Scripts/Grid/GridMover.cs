@@ -4,106 +4,94 @@ using UnityEngine.InputSystem;
 
 public class GridMover : MonoBehaviour
 {
-    [Header("Movement")]
     public float moveSpeed = 8f;
     public float moveDelay = 0.05f;
 
     public Vector3 FacingDirection { get; private set; } = Vector3.forward;
 
-    private bool isMoving = false;
-    private float inputHoldTimer = 0f;
-    private GridManager grid;
+    private bool isMoving;
+    private float timer;
 
-    private PlayerInputActions inputActions;
-    private Vector2 moveInput;
+    private GridManager grid;
+    private PlayerInputActions input;
+    private Vector2 move;
 
     void Awake()
     {
-        inputActions = new PlayerInputActions();
+        input = new PlayerInputActions();
     }
 
     void OnEnable()
     {
-        inputActions.Player.Enable();
+        input.Player.Enable();
 
-        inputActions.Player.Move.performed += OnMovePerformed;
-        inputActions.Player.Move.canceled += OnMoveCanceled;
+        input.Player.Move.performed += ctx => move = ctx.ReadValue<Vector2>();
+        input.Player.Move.canceled += _ => { move = Vector2.zero; timer = 0f; };
     }
 
     void OnDisable()
     {
-        inputActions.Player.Move.performed -= OnMovePerformed;
-        inputActions.Player.Move.canceled -= OnMoveCanceled;
-
-        inputActions.Player.Disable();
+        input.Player.Disable();
     }
 
     void Start()
     {
         grid = GridManager.Instance;
-
         transform.position = grid.SnapToGrid(transform.position);
-    }
-
-    void OnMovePerformed(InputAction.CallbackContext ctx)
-    {
-        moveInput = ctx.ReadValue<Vector2>();
-    }
-    
-    void OnMoveCanceled(InputAction.CallbackContext ctx)
-    {
-        moveInput = Vector2.zero;
-        inputHoldTimer = 0f;
     }
 
     void Update()
     {
-        if (isMoving || moveInput == Vector2.zero) return;
+        if (isMoving || move == Vector2.zero) return;
 
-        Vector3 inputDir = new Vector3(moveInput.x, 0f, moveInput.y);
+        Vector3 dir = new Vector3(move.x, 0f, move.y);
 
-        if (inputDir.sqrMagnitude > 1f)
-            inputDir.Normalize();
+        if (dir.sqrMagnitude > 1f)
+            dir.Normalize();
 
-        FacingDirection = inputDir;
+        FacingDirection = dir;
+        if (dir != Vector3.zero)
+            transform.forward = dir;
 
-        if (FacingDirection != Vector3.zero)
-            transform.forward = FacingDirection;
+        timer += Time.deltaTime;
+        if (timer < moveDelay) return;
 
-        inputHoldTimer += Time.deltaTime;
-        if (inputHoldTimer > 0.01f && inputHoldTimer < moveDelay)
+        TryMove(dir);
+    }
+
+    void TryMove(Vector3 dir)
+    {
+        Vector3 raw = transform.position + dir * grid.tileSize;
+
+        Vector3 clamped = grid.ClampToBounds(raw);
+        Vector3 snapped = grid.SnapToGrid(clamped);
+
+        Vector2Int target = grid.WorldToGrid(snapped);
+
+        if (!grid.IsWalkable(target))
             return;
 
-        TryMove(inputDir);
+        StartCoroutine(MoveTo(snapped));
     }
 
-    void TryMove(Vector3 direction)
-    {
-        Vector3 rawTarget = transform.position + direction * grid.tileSize;
-
-        Vector3 clamped = grid.ClampToBounds(rawTarget);
-        Vector3 targetPos = grid.SnapToGrid(clamped);
-
-        if (grid.IsWalkable(targetPos))
-            StartCoroutine(SlideTo(targetPos));
-    }
-
-    IEnumerator SlideTo(Vector3 targetPos)
+    IEnumerator MoveTo(Vector3 target)
     {
         isMoving = true;
-        Vector3 startPos = transform.position;
-        float elapsed = 0f;
+
+        Vector3 start = transform.position;
+        float t = 0f;
         float duration = grid.tileSize / moveSpeed;
 
-        while (elapsed < duration)
+        while (t < duration)
         {
-            transform.position = Vector3.Lerp(startPos, targetPos, elapsed / duration);
-            elapsed += Time.deltaTime;
+            transform.position = Vector3.Lerp(start, target, t / duration);
+            t += Time.deltaTime;
             yield return null;
         }
 
-        transform.position = targetPos;
-        inputHoldTimer = 0f;
+        transform.position = target;
+
+        timer = 0f;
         isMoving = false;
     }
 }
