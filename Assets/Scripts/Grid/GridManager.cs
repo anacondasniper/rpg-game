@@ -1,3 +1,4 @@
+using Unity.Collections;
 using UnityEngine;
 
 public class GridManager : MonoBehaviour
@@ -17,14 +18,9 @@ public class GridManager : MonoBehaviour
         Instance = this;
 
         tiles = new GridTile[gridWidth, gridHeight];
-
-        for (int x = 0; x < gridWidth; x++)
-        {
-            for (int z = 0; z < gridHeight; z++)
-            {
-                tiles[x, z] = new GridTile();
-            }
-        }
+        for (int x = 0 ; x < gridWidth; x++)
+        for (int z = 0; z < gridHeight; z++)
+            tiles[x, z] = new GridTile();
     }
 
     public Vector2Int WorldToGrid(Vector3 worldPos)
@@ -70,22 +66,43 @@ public class GridManager : MonoBehaviour
 
         return Origin + new Vector3(local.x, worldPos.y, local.z);
     }
+    // Tiles
+    public TileType GetTileType(Vector2Int pos) =>
+        InBounds(pos) ? tiles[pos.x, pos.y].type : TileType.Obstacle;
 
-    public bool IsWalkable(Vector2Int pos)
+    public void SetTile(Vector2Int pos, TileType type)
     {
-        return InBounds(pos) && tiles[pos.x, pos.y].walkable;
+        if (InBounds(pos)) tiles[pos.x, pos.y].type = type;
     }
 
-    public void SetObstacle(Vector2Int pos)
-    {
-        if (!InBounds(pos)) return;
-        tiles[pos.x, pos.y].walkable = false;
-    }
+    public bool IsWalkable(Vector2Int pos) =>
+        InBounds(pos) && tiles[pos.x, pos.y].IsWalkable;
 
     public void RegisterInteractable(Vector2Int pos, IInteractable obj)
     {
         if (!InBounds(pos)) return;
         tiles[pos.x, pos.y].interactable = obj;
-        tiles[pos.x, pos.y].walkable = false;
+        tiles[pos.x, pos.y].type = TileType.Interactable;
+    }
+
+    void OnDrawGizmos()
+    {
+        if (tiles == null) return;
+        for (int x = 0; x < gridWidth; x++)
+        for (int z = 0; z < gridHeight; z++)
+        {
+            Gizmos.color = tiles[x, z].type switch
+            {
+                TileType.Obstacle     => new Color(1f,   0.2f, 0.2f, 0.5f),
+                TileType.Encounter    => new Color(0.2f, 0.8f, 0.2f, 0.5f),
+                TileType.Water        => new Color(0.2f, 0.4f, 1f,   0.5f),
+                TileType.Ice          => new Color(0.6f, 0.9f, 1f,   0.5f),
+                TileType.Warp         => new Color(1f,   0.8f, 0f,   0.5f),
+                TileType.Interactable => new Color(0.8f, 0.2f, 0.8f, 0.5f),
+                _                     => new Color(1f,   1f,   1f,   0.04f),
+            };
+            Vector3 center = GridToWorld(new Vector2Int(x, z));
+            Gizmos.DrawCube(center, new Vector3(tileSize * 0.9f, 0.02f, tileSize * 0.9f));
+        }
     }
 }

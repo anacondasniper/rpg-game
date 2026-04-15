@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 7839601028867118295}
   - component: {fileID: 5963164546619392602}
   - component: {fileID: 2942774285021344703}
+  - component: {fileID: 6121711715735244344}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -69,7 +70,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: 3d9914e92c1db3f4caed885c92e0b7e9, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -129,7 +130,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GridMover
   moveSpeed: 8
-  moveDelay: 0.1
+  moveDelay: 0.01
+--- !u!114 &6121711715735244344
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 652084435336369921}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 711ce280129c4934aba90495faaea79f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerInteractor
 --- !u!1 &3536848778947464275
 GameObject:
   m_ObjectHideFlags: 0

@@ -11,28 +11,20 @@ public class GridMover : MonoBehaviour
 
     private bool isMoving;
     private float timer;
-
     private GridManager grid;
     private PlayerInputActions input;
     private Vector2 move;
 
-    void Awake()
-    {
-        input = new PlayerInputActions();
-    }
+    void Awake() => input = new PlayerInputActions();
 
     void OnEnable()
     {
         input.Player.Enable();
-
         input.Player.Move.performed += ctx => move = ctx.ReadValue<Vector2>();
-        input.Player.Move.canceled += _ => { move = Vector2.zero; timer = 0f; };
+        input.Player.Move.canceled  += _ => { move = Vector2.zero; timer = 0f; };
     }
 
-    void OnDisable()
-    {
-        input.Player.Disable();
-    }
+    void OnDisable() => input.Player.Disable();
 
     void Start()
     {
@@ -45,13 +37,10 @@ public class GridMover : MonoBehaviour
         if (isMoving || move == Vector2.zero) return;
 
         Vector3 dir = new Vector3(move.x, 0f, move.y);
-
-        if (dir.sqrMagnitude > 1f)
-            dir.Normalize();
+        if (dir.sqrMagnitude > 1f) dir.Normalize();
 
         FacingDirection = dir;
-        if (dir != Vector3.zero)
-            transform.forward = dir;
+        if (dir != Vector3.zero) transform.forward = dir;
 
         timer += Time.deltaTime;
         if (timer < moveDelay) return;
@@ -61,15 +50,10 @@ public class GridMover : MonoBehaviour
 
     void TryMove(Vector3 dir)
     {
-        Vector3 raw = transform.position + dir * grid.tileSize;
-
-        Vector3 clamped = grid.ClampToBounds(raw);
-        Vector3 snapped = grid.SnapToGrid(clamped);
-
+        Vector3 snapped = grid.SnapToGrid(grid.ClampToBounds(transform.position + dir * grid.tileSize));
         Vector2Int target = grid.WorldToGrid(snapped);
 
-        if (!grid.IsWalkable(target))
-            return;
+        if (!grid.IsWalkable(target)) return;
 
         StartCoroutine(MoveTo(snapped));
     }
@@ -77,10 +61,8 @@ public class GridMover : MonoBehaviour
     IEnumerator MoveTo(Vector3 target)
     {
         isMoving = true;
-
         Vector3 start = transform.position;
-        float t = 0f;
-        float duration = grid.tileSize / moveSpeed;
+        float t = 0f, duration = grid.tileSize / moveSpeed;
 
         while (t < duration)
         {
@@ -90,8 +72,28 @@ public class GridMover : MonoBehaviour
         }
 
         transform.position = target;
-
         timer = 0f;
         isMoving = false;
+
+        OnTileLanded(grid.WorldToGrid(target));
+    }
+
+    void OnTileLanded(Vector2Int cell)
+    {
+        switch (grid.GetTileType(cell))
+        {
+            case TileType.Encounter:
+                if (Random.value < 0.1f)
+                    Debug.Log("Wild encounter!"); // BattleManager.Instance?.TriggerBattle();
+                break;
+
+            case TileType.Warp:
+                Debug.Log("Warp triggered!"); // WarpManager.Instance?.Warp(cell);
+                break;
+
+            case TileType.Ice:
+                TryMove(FacingDirection); // Keep sliding
+                break;
+        }
     }
 }
