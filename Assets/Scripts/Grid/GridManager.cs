@@ -85,6 +85,19 @@ public class GridManager : MonoBehaviour
         tiles[pos.x, pos.y].type = TileType.Interactable;
     }
 
+    public void RegisterEncounter(Vector2Int pos, WildEncounterData data)
+    {
+        if (!InBounds(pos)) return;
+        tiles[pos.x, pos.y].encounterData = data;
+        tiles[pos.x, pos.y].type = TileType.Encounter;
+    }
+
+    public WildEncounterData GetEncounterTable(Vector2Int pos)
+    {
+        if (tiles[pos.x, pos.y].type != TileType.Encounter) return null;
+        return tiles[pos.x, pos.y].encounterData;
+    }
+
     void OnDrawGizmos()
     {
         if (tiles == null) return;

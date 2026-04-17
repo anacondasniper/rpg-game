@@ -34,6 +34,8 @@ public class GridMover : MonoBehaviour
 
     void Update()
     {
+        if (BattleManager.Instance.InBattle) return;
+        
         if (isMoving || move == Vector2.zero) return;
 
         Vector3 dir = new Vector3(move.x, 0f, move.y);
@@ -83,8 +85,9 @@ public class GridMover : MonoBehaviour
         switch (grid.GetTileType(cell))
         {
             case TileType.Encounter:
-                if (Random.value < 0.1f)
-                    Debug.Log("Wild encounter!"); // BattleManager.Instance?.TriggerBattle();
+                var table = grid.GetEncounterTable(cell);
+                if (table != null && Random.value < 0.1f)
+                    BattleManager.Instance.StartWildBattle(table.Roll());
                 break;
 
             case TileType.Warp:

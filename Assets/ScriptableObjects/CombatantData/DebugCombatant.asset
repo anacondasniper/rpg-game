@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0ccd956b92a0c6438ba1698aac6ec72, type: 3}
+  m_Name: DebugCombatant
+  m_EditorClassIdentifier: Assembly-CSharp::CombatantData
+  combatantName: Debug Mon
+  baseHp: 50
+  baseAttack: 50
+  baseDefense: 50
+  baseSpeed: 50
+  moves:
+  - {fileID: 11400000, guid: b17322c03699a0a41b375dc6250282f3, type: 2}
+  - {fileID: 11400000, guid: feea2703b2b38dd42b38829bc0fe3926, type: 2}
+  - {fileID: 11400000, guid: 7ebbfcdb456d4e44ea709b748ba94d8a, type: 2}
+  - {fileID: 11400000, guid: bc5c4fe3659951a49a1867b05854db73, type: 2}
+  modelPrefab: {fileID: 5150569861279425972, guid: 73a687b7f24e9ab438fa6ca8cd0130ab, type: 3}
+  animatorController: {fileID: 9100000, guid: 6b40f3655c4ea5c4eabb103ee8fadc34, type: 2}

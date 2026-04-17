@@ -17,5 +17,6 @@ public class GridTile
 {
     public TileType type = TileType.Walkable;
     public IInteractable interactable; 
+    public WildEncounterData encounterData;
     public bool IsWalkable => type == TileType.Walkable || type == TileType.Encounter || type == TileType.Ice || type == TileType.Warp;
 }
